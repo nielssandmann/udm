@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>U-DM 2026 U-16 What-If</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+:root{
+  --ground:#F2F4F3; --panel:#FFFFFF; --ink:#18212B; --muted:#5F6B74; --line:#DCE2E0;
+  --accent:#2F6A55; --accent-soft:#E1EDE7; --gold:#B8862B; --gold-soft:#F5EBD6;
+  --silver:#6F7C88; --silver-soft:#E7EBEE; --bar:#2F6A55; --bar2:#B8862B;
+  --sq-light:#E6ECE9; --sq-dark:#C9D5CF;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#12181D; --panel:#1A2228; --ink:#E6ECEA; --muted:#98A5AD; --line:#2B363D;
+    --accent:#6FC2A0; --accent-soft:#1F3A30; --gold:#E0B25A; --gold-soft:#3A2F1A;
+    --silver:#AAB6C0; --silver-soft:#28323A; --bar:#6FC2A0; --bar2:#E0B25A;
+    --sq-light:#1F292F; --sq-dark:#26323A;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#12181D; --panel:#1A2228; --ink:#E6ECEA; --muted:#98A5AD; --line:#2B363D;
+  --accent:#6FC2A0; --accent-soft:#1F3A30; --gold:#E0B25A; --gold-soft:#3A2F1A;
+  --silver:#AAB6C0; --silver-soft:#28323A; --bar:#6FC2A0; --bar2:#E0B25A;
+  --sq-light:#1F292F; --sq-dark:#26323A;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 56px}
+header{display:grid;gap:6px;margin-bottom:22px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(28px,4.4vw,44px);line-height:1.05;margin:0;text-wrap:balance}
+h1 span{color:var(--accent)}
+.lede{color:var(--muted);max-width:68ch;margin:0}
+h2{font-family:var(--display);font-weight:600;font-size:20px;margin:0;text-wrap:balance}
+.grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;cursor:pointer}
+.chip{border:1px solid var(--line);background:var(--ground);color:var(--ink);border-radius:999px;padding:5px 12px;font-size:13px}
+.chip:hover{border-color:var(--accent)}
+.chip:focus-visible,.seg button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.boards{display:grid;gap:8px}
+.board{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;background:var(--ground)}
+.bno{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center}
+.players{display:grid;gap:2px;min-width:0}
+.pl{display:flex;gap:6px;align-items:baseline;min-width:0}
+.pl .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.pl .meta{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.dot{width:10px;height:10px;border-radius:2px;flex:none;border:1px solid var(--muted);transform:translateY(1px)}
+.dot.w{background:#fff}.dot.b{background:#18212B}
+.odds{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:transparent;color:var(--ink);padding:6px 9px;font-family:var(--mono);font-size:13px;min-width:38px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--panel)}
+.seg button.q[aria-pressed="true"]{background:var(--muted);color:var(--panel)}
+@media (max-width:480px){.board{grid-template-columns:22px minmax(0,1fr)}.board .seg{grid-column:1/-1;justify-self:stretch}.seg button{flex:1}}
+.locked{padding:14px;border:1px dashed var(--line);border-radius:8px;color:var(--muted);font-size:14px;margin:0}
+.odds-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.odds-table th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+.odds-table td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.odds-table tr:last-child td{border-bottom:0}
+.barcell{width:38%}
+.bar{position:relative;height:10px;border-radius:3px;background:var(--sq-light);overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--bar);border-radius:3px}
+.bar.t2 i{background:var(--bar2)}
+.pct{font-family:var(--mono);font-size:13px;text-align:right;white-space:nowrap;width:56px}
+.delta{font-family:var(--mono);font-size:11px;white-space:nowrap}
+.delta.up{color:var(--accent)}.delta.down{color:#C0513F}
+.status{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.scroll{overflow-x:auto}
+.stand{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:520px}
+.stand th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:right;padding:5px 6px;border-bottom:1px solid var(--line)}
+.stand th.l,.stand td.l{text-align:left}
+.stand td{padding:6px;text-align:right;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:13px}
+.stand td.nm{font-family:var(--body);font-size:14px;font-weight:500;text-align:left;white-space:nowrap}
+.stand td.pts{font-weight:600;color:var(--ink)}
+.stand tr.p1 td{background:var(--gold-soft)}
+.stand tr.p2 td{background:var(--silver-soft)}
+.res{display:inline-flex;gap:3px}
+.res b{display:inline-grid;place-items:center;width:30px;height:22px;border-radius:4px;font-weight:500;font-size:11px}
+.res b.w{background:var(--sq-light)}.res b.bk{background:var(--sq-dark)}
+.res b.pend{opacity:.45}
+.place{display:inline-grid;place-items:center;min-width:24px;height:22px;border-radius:5px;font-weight:600}
+tr.p1 .place{background:var(--gold);color:var(--panel)}
+tr.p2 .place{background:var(--silver);color:var(--panel)}
+.settings{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:14px}
+select{font:inherit;font-size:14px;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.notes{font-size:13px;color:var(--muted);display:grid;gap:6px;max-width:80ch}
+.notes p{margin:0}
+.full{grid-column:1/-1}
+.tag{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">U-DM 2026 · U-16 · Swiss, 5 rounds · after round 3</div>
+    <h1>Who reaches <span>first and second</span>?</h1>
+    <p class="lede">Choose results for rounds 4 and 5, and the odds update. Results you leave on <b>?</b> are simulated from the ratings. Ties are broken by Buchholz Cut-1, then full Buchholz.</p>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="r4h">
+      <div class="panel-head">
+        <h2 id="r4h">Round 4</h2>
+        <span class="hint">Official pairings</span>
+      </div>
+      <div class="presets" role="group" aria-label="Scenario presets">
+        <button class="chip" data-preset="reset">Clear all</button>
+        <button class="chip" data-preset="lud">Ludvig beats Leia</button>
+        <button class="chip" data-preset="draw">Board 1 drawn</button>
+        <button class="chip" data-preset="leia">Leia beats Ludvig</button>
+        <button class="chip" data-preset="fav">Rating favourites win</button>
+      </div>
+      <div class="boards" id="r4"></div>
+
+      <div class="panel-head" style="margin-top:6px">
+        <h2 id="r5h">Round 5</h2>
+        <span class="tag">Estimated pairings</span>
+      </div>
+      <div id="r5"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="oddsh">
+      <div class="panel-head">
+        <h2 id="oddsh">Final odds</h2>
+        <span class="status" id="status">Simulating…</span>
+      </div>
+      <table class="odds-table" id="odds">
+        <thead><tr><th>Player</th><th class="barcell">1st place</th><th></th><th class="barcell">Top 2</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <p class="hint" id="deltaNote">The small figures show the change from the starting position, when every result is on <b>?</b>.</p>
+      <div class="settings">
+        <label for="drawSel">Draw rate</label>
+        <select id="drawSel">
+          <option value="0.6">Low</option>
+          <option value="1" selected>Normal</option>
+          <option value="1.5">High</option>
+        </select>
+        <label for="runsSel">Simulations</label>
+        <select id="runsSel">
+          <option value="5000">5,000</option>
+          <option value="20000" selected>20,000</option>
+          <option value="60000">60,000</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="panel full" aria-labelledby="sth">
+      <div class="panel-head">
+        <h2 id="sth">Standings with your results</h2>
+        <span class="hint" id="stHint"></span>
+      </div>
+      <div class="scroll">
+        <table class="stand" id="stand">
+          <thead><tr><th class="l">Pl</th><th class="l">Player</th><th>Rtg</th><th class="l">Rounds 1–5</th><th>Pts</th><th>BH-1</th><th>BH</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="notes">
+        <p><b>How the odds are calculated.</b> Each game's odds come from the players' DSU ratings, with about 35 rating points added for White. The draw rate is highest between evenly matched players. Kunuk, Elliot, Aksel, Malthe and Jonatan have no FIDE rating, so their odds are less reliable.</p>
+        <p><b>Round 5 pairings</b> are estimated with a simplified Swiss pairing: score groups, no rematches, and colour rules. The arbiter's pairing program may produce different pairings, especially in the middle of the table. If two players are equal on points, BH-1 and BH, the page ranks the higher-rated player first. The official placing for such a tie may differ.</p>
+        <p>Source: <a href="https://turnering.skak.dk/TournamentActive/Details?tourId=30508&amp;groupId=15432&amp;curtab=tour-table" style="color:var(--accent)">turnering.skak.dk</a>. Rounds 1–3 are final results.</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+// Tournament data from turnering.skak.dk (U-DM 2026, U-16), rounds 1–3 final.
+const P={
+ 1:["FM Villads Sandmann",2210],2:["Noah Frydendahl",2160],3:["Eskil Ahl",2047],4:["Ludvig Bjerg",2039],
+ 5:["Buster Fyhn",2014],6:["Leia Andries",1983],7:["Johannes Nielsen",1779],8:["Atharva Khandelia",1738],
+ 9:["Asmund Børgesen",1717],10:["Matti Johansen",1697],11:["Malthe Skovgaard",1668],12:["Kunuk Sommer",1599],
+ 13:["William Nielsen",1551],14:["Elliot Reindel",1513],15:["Aksel Svenson",1476],16:["Jonatan Steinmeier",1426]};
+const IDS=Object.keys(P).map(Number);
+const rt=id=>P[id][1], nm=id=>P[id][0];
+const PLAYED=[[1,9,1],[10,2,0],[3,11,1],[12,4,0],[5,13,1],[14,6,0],[7,15,1],[16,8,0],
+ [6,1,.5],[2,5,.5],[8,3,0],[4,7,1],[9,14,1],[13,10,1],[11,16,1],[15,12,1],
+ [3,4,0],[1,2,.5],[5,6,0],[7,11,0],[13,8,0],[15,9,1],[10,14,1],[12,16,0]];
+const R4=[[4,6],[11,1],[2,3],[8,15],[7,5],[9,13],[16,10],[14,12]];
+
+let r4res=Array(8).fill(null), r5res={}, drawMul=1, RUNS=20000, baseline=null;
+try{const s=JSON.parse(localStorage.getItem("u16whatif")||"null"); if(s){r4res=s.r4||r4res; r5res=s.r5||{};}}catch(e){}
+function save(){try{localStorage.setItem("u16whatif",JSON.stringify({r4:r4res,r5:r5res}))}catch(e){}}
+
+function probs(w,b){
+  const E=1/(1+Math.pow(10,-(rt(w)+35-rt(b))/400));
+  let d=(0.30*(1-Math.abs(E-.5)*2)+0.05)*drawMul; d=Math.min(d,0.8);
+  const pw=Math.max(E-d/2,0.01), pl=Math.max(1-E-d/2,0.01);
+  const s=pw+d+pl; return [pw/s,d/s,pl/s];
+}
+function play(w,b){const [pw,pd]=probs(w,b),r=Math.random();return r<pw?1:r<pw+pd?.5:0}
+
+function tables(gs){
+  const pts={},opp={},col={};
+  for(const i of IDS){pts[i]=0;opp[i]=[];col[i]=[]}
+  for(const [w,b,s] of gs){pts[w]+=s;pts[b]+=1-s;opp[w].push(b);opp[b].push(w);col[w].push("W");col[b].push("B")}
+  return {pts,opp,col};
+}
+function ranking(gs){
+  const {pts,opp}=tables(gs), t={};
+  for(const p of IDS){const sc=opp[p].map(o=>pts[o]).sort((a,b)=>a-b);const bh=sc.reduce((a,b)=>a+b,0);t[p]=[pts[p],bh-(sc.length?sc[0]:0),bh]}
+  const order=IDS.slice().sort((a,b)=>t[b][0]-t[a][0]||t[b][1]-t[a][1]||t[b][2]-t[a][2]||rt(b)-rt(a));
+  return {order,t};
+}
+// Pairing and simulation logic written with AI assistance (Claude Code, Claude Opus 5.5).
+// Simplified Swiss pairing for the final round: score groups, top half vs bottom half, no rematches, colour rules.
+function pairNext(gs){
+  const {pts,opp,col}=tables(gs);
+  const order=IDS.slice().sort((a,b)=>pts[b]-pts[a]||a-b);
+  const need=p=>{const c=col[p],d=c.filter(x=>x=="W").length-c.filter(x=>x=="B").length,l2=c.slice(-2).join("");
+    if(d>=2||l2=="WW")return"B"; if(d<=-2||l2=="BB")return"W"; return null};
+  const pref=p=>{const c=col[p],d=c.filter(x=>x=="W").length-c.filter(x=>x=="B").length;
+    return d>0?"B":d<0?"W":(c[c.length-1]=="W"?"B":"W")};
+  function rec(rem){
+    if(!rem.length)return[];
+    const p=rem[0],rest=rem.slice(1),grp=rest.filter(q=>pts[q]==pts[p]);
+    const ideal=grp.length?grp[Math.ceil(grp.length/2)-1]:null, ii=ideal?rest.indexOf(ideal):0;
+    const cands=rest.slice().sort((a,b)=>Math.abs(pts[a]-pts[p])-Math.abs(pts[b]-pts[p])||Math.abs(rest.indexOf(a)-ii)-Math.abs(rest.indexOf(b)-ii)||rest.indexOf(a)-rest.indexOf(b));
+    for(const q of cands){
+      if(opp[p].includes(q))continue;
+      const np=need(p),nq=need(q);
+      if(np&&nq&&np==nq&&!(pts[p]>2&&pts[q]>2))continue;
+      let pair;
+      if(np=="W"||nq=="B")pair=[p,q]; else if(np=="B"||nq=="W")pair=[q,p];
+      else pair=(pref(p)=="W"||pref(q)=="B")?[p,q]:[q,p];
+      const sub=rec(rest.filter(x=>x!==q)); if(sub)return[pair,...sub];
+    }
+    return null;
+  }
+  return rec(order);
+}
+
+function r4Games(fixedOnly){
+  const g=[];R4.forEach(([w,b],i)=>{const r=r4res[i];if(r!==null)g.push([w,b,r]);else if(!fixedOnly)g.push([w,b,play(w,b)])});return g;
+}
+function allR4Set(){return r4res.every(r=>r!==null)}
+const key=(w,b)=>w+"-"+b;
+
+function simulate(n){
+  const win={},top2={};IDS.forEach(i=>{win[i]=0;top2[i]=0});
+  const fixedPair=allR4Set()?pairNext(PLAYED.concat(r4Games(true))):null;
+  for(let k=0;k<n;k++){
+    let gs=PLAYED.concat(r4Games(false));
+    const pr=fixedPair||pairNext(gs);
+    for(const [w,b] of pr){const f=fixedPair?r5res[key(w,b)]:undefined;gs.push([w,b,f==null?play(w,b):f])}
+    const o=ranking(gs).order; win[o[0]]++; top2[o[0]]++; top2[o[1]]++;
+  }
+  IDS.forEach(i=>{win[i]/=n;top2[i]/=n});
+  return {win,top2};
+}
+
+// ---------- UI ----------
+function segHTML(id,val){
+  const opts=[[1,"1–0"],[.5,"½"],[0,"0–1"],[null,"?"]];
+  return `<div class="seg" role="group" aria-label="Result">${opts.map(([v,l])=>`<button type="button" data-k="${id}" data-v="${v}" class="${v===null?"q":""}" aria-pressed="${val===v}">${l}</button>`).join("")}</div>`;
+}
+function boardHTML(no,w,b,val,id){
+  const {pts}=tables(PLAYED.concat(r4Games(true)));
+  const [pw,pd,pl]=probs(w,b);
+  return `<div class="board"><div class="bno">${no}</div><div class="players">
+   <div class="pl"><span class="dot w" title="White"></span><span class="nm">${nm(w)}</span><span class="meta">${rt(w)} · ${fmt(pts[w])}</span></div>
+   <div class="pl"><span class="dot b" title="Black"></span><span class="nm">${nm(b)}</span><span class="meta">${rt(b)} · ${fmt(pts[b])}</span></div>
+   <div class="odds">Rating odds: White ${Math.round(pw*100)} · draw ${Math.round(pd*100)} · Black ${Math.round(pl*100)}</div>
+  </div>${segHTML(id,val)}</div>`;
+}
+const fmt=x=>{const w=Math.floor(x),h=x-w>0;return (w||!h?w:"")+(h?"½":"")};
+
+function renderBoards(){
+  document.getElementById("r4").innerHTML=R4.map(([w,b],i)=>boardHTML(i+1,w,b,r4res[i],"r4:"+i)).join("");
+  const r5=document.getElementById("r5");
+  if(!allR4Set()){r5.innerHTML=`<p class="locked">Set all eight round 4 results to see the estimated round 5 pairings. Until then, round 5 is simulated with pairings worked out for each run.</p>`;return}
+  const pr=pairNext(PLAYED.concat(r4Games(true)));
+  const valid=new Set(pr.map(([w,b])=>key(w,b)));
+  for(const k in r5res)if(!valid.has(k))delete r5res[k];
+  r5.innerHTML=`<div class="boards">${pr.map(([w,b],i)=>boardHTML(i+1,w,b,r5res[key(w,b)]??null,"r5:"+key(w,b))).join("")}</div>`;
+}
+function renderStandings(){
+  const gs=PLAYED.concat(r4Games(true));
+  if(allR4Set()){const pr=pairNext(gs);for(const [w,b] of pr){const f=r5res[key(w,b)];if(f!=null)gs.push([w,b,f])}}
+  const {order,t}=ranking(gs);
+  const rounds={};IDS.forEach(i=>rounds[i]=[]);
+  gs.forEach(([w,b,s])=>{rounds[w].push({o:b,c:"w",s});rounds[b].push({o:w,c:"bk",s:1-s})});
+  const pend={};R4.forEach(([w,b],i)=>{if(r4res[i]===null){pend[w]={o:b,c:"w"};pend[b]={o:w,c:"bk"}}});
+  const rows=order.map((p,i)=>{
+    const cells=rounds[p].map(r=>`<b class="${r.c}" title="vs ${nm(r.o)}">${r.o}${r.s==1?"+":r.s==0?"−":"="}</b>`);
+    if(pend[p])cells.push(`<b class="${pend[p].c} pend" title="vs ${nm(pend[p].o)}, not set">${pend[p].o}?</b>`);
+    const cls=i==0?"p1":i==1?"p2":"";
+    return `<tr class="${cls}"><td class="l"><span class="place">${i+1}</span></td><td class="nm">${nm(p)}</td><td>${rt(p)}</td><td class="l"><span class="res">${cells.join("")}</span></td><td class="pts">${fmt(t[p][0])}</td><td>${t[p][1].toFixed(1)}</td><td>${t[p][2].toFixed(1)}</td></tr>`;
+  });
+  document.querySelector("#stand tbody").innerHTML=rows.join("");
+  const n=gs.length-PLAYED.length;
+  document.getElementById("stHint").textContent=n==0?"After round 3 · each cell shows the opponent's number, then + win, = draw, − loss":`After round 3 plus the ${n} result${n>1?"s":""} you set · light cells are games as White`;
+}
+function renderOdds(res){
+  const ids=IDS.filter(i=>res.top2[i]>=0.0005||(baseline&&baseline.top2[i]>=0.0005)).sort((a,b)=>res.top2[b]-res.top2[a]||res.win[b]-res.win[a]);
+  const pc=x=>x<0.0005?"0%":x<0.01?"<1%":Math.round(x*100)+"%";
+  const dl=(a,b)=>{if(!baseline)return"";const d=Math.round((a-b)*100);if(Math.abs(d)<1)return"";return `<span class="delta ${d>0?"up":"down"}">${d>0?"+":"−"}${Math.abs(d)}</span>`};
+  document.querySelector("#odds tbody").innerHTML=ids.map(i=>`<tr>
+    <td>${nm(i)}</td>
+    <td class="barcell"><div class="bar"><i style="width:${res.win[i]*100}%"></i></div></td>
+    <td class="pct">${pc(res.win[i])} ${dl(res.win[i],baseline?baseline.win[i]:0)}</td>
+    <td class="barcell"><div class="bar t2"><i style="width:${res.top2[i]*100}%"></i></div></td>
+    <td class="pct">${pc(res.top2[i])} ${dl(res.top2[i],baseline?baseline.top2[i]:0)}</td></tr>`).join("");
+}
+let timer=null;
+function update(){
+  save(); renderBoards(); renderStandings();
+  document.getElementById("status").textContent="Simulating…";
+  clearTimeout(timer);
+  timer=setTimeout(()=>{
+    const t0=performance.now(), res=simulate(RUNS);
+    const isBase=r4res.every(r=>r===null);
+    if(isBase||!baseline){ if(isBase) baseline=res; else { const s=r4res; r4res=Array(8).fill(null); baseline=simulate(RUNS); r4res=s; } }
+    renderOdds(res);
+    document.getElementById("status").textContent=`${RUNS.toLocaleString("en")} simulations · ${Math.round(performance.now()-t0)} ms`;
+  },30);
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest(".seg button");
+  if(b){const [r,i]=b.dataset.k.split(":");const v=b.dataset.v==="null"?null:Number(b.dataset.v);
+    if(r=="r4")r4res[Number(i)]=v; else { if(v===null)delete r5res[i]; else r5res[i]=v; }
+    update();return}
+  const p=e.target.closest("[data-preset]");
+  if(p){const k=p.dataset.preset;
+    if(k=="reset"){r4res=Array(8).fill(null);r5res={}}
+    else if(k=="lud")r4res[0]=1; else if(k=="draw")r4res[0]=.5; else if(k=="leia")r4res[0]=0;
+    else if(k=="fav"){r4res=R4.map(([w,b])=>rt(w)>=rt(b)?1:0);r5res={}}
+    update()}
+});
+document.getElementById("drawSel").addEventListener("change",e=>{drawMul=Number(e.target.value);baseline=null;update()});
+document.getElementById("runsSel").addEventListener("change",e=>{RUNS=Number(e.target.value);baseline=null;update()});
+update();
+</script>
+
+</body>
+</html>
