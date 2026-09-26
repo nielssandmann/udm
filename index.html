@@ -187,16 +187,7 @@ h3.sub{font-family:var(--display);font-weight:600;font-size:16px;margin:4px 0 0}
         <h2 id="vh">Villads's view</h2>
         <span class="status" id="vStatus">Simulating…</span>
       </div>
-      <p class="hint">This section shows what Villads needs from the games he doesn't play. It uses the results you set above. The setting below replaces whatever is set for Villads's own games.</p>
-      <div class="settings">
-        <label for="vSel">Villads's own games</label>
-        <select id="vSel">
-          <option value="1,1" selected>He wins both (4/5)</option>
-          <option value="1,0.5">He wins round 4, draws round 5 (3½)</option>
-          <option value="0.5,1">He draws round 4, wins round 5 (3½)</option>
-          <option value="none">Use the results set on the boards</option>
-        </select>
-      </div>
+      <p class="hint">This section shows what Villads needs from the games he doesn't play. It uses the results you set above, including his own games. Any of his games left on <b>?</b> is simulated from the ratings.</p>
       <div class="vtiles">
         <div class="vtile"><span class="vlab">Title chance</span><span class="vnum" id="vWin">–</span></div>
         <div class="vtile"><span class="vlab">Top-2 chance</span><span class="vnum" id="vTop2">–</span></div>
@@ -383,7 +374,7 @@ function renderOdds(res){
     <td class="pct">${pc(res.top2[i])} ${dl(res.top2[i],baseline?baseline.top2[i]:0)}</td></tr>`).join("");
 }
 // ---------- Villads's view ----------
-let vMode=[1,1], vToken=0;
+const vMode=null; let vToken=0;
 const VPER=2000; // simulations per hypothetical result in the guide
 function villadsR4(){
   const res=r4res.slice();
@@ -452,9 +443,7 @@ function update(){
     document.getElementById("status").textContent=`${RUNS.toLocaleString("en")} simulations · ${Math.round(performance.now()-t0)} ms`;
     renderVillads();
   },30);
-}
-document.getElementById("vSel").addEventListener("change",e=>{vMode=e.target.value=="none"?null:e.target.value.split(",").map(Number);renderVillads()});
-document.addEventListener("click",e=>{
+}document.addEventListener("click",e=>{
   const b=e.target.closest(".seg button");
   if(b){const [r,i]=b.dataset.k.split(":");const v=b.dataset.v==="null"?null:Number(b.dataset.v);
     if(r=="r4")r4res[Number(i)]=v; else { if(v===null)delete r5res[i]; else r5res[i]=v; }
