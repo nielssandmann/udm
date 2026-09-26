@@ -104,6 +104,24 @@ select{font:inherit;font-size:14px;padding:4px 8px;border-radius:6px;border:1px 
 .notes{font-size:13px;color:var(--muted);display:grid;gap:6px;max-width:80ch}
 .notes p{margin:0}
 .full{grid-column:1/-1}
+.vtiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.vtiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.vtile{display:grid;gap:2px;padding:12px 14px;border-radius:8px;background:var(--ground)}
+.vtile.wide{grid-column:span 2}
+.vlab{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.vnum{font-family:var(--display);font-weight:800;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.vopp{font-weight:500;font-size:15px;align-self:center}
+h3.sub{font-family:var(--display);font-weight:600;font-size:16px;margin:4px 0 0}
+.vguide{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:560px}
+.vguide th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:center;padding:5px 6px;border-bottom:1px solid var(--line)}
+.vguide th.l,.vguide td.l{text-align:left}
+.vguide td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:center;font-family:var(--mono);font-size:13px}
+.vguide td.l{font-family:var(--body);font-size:14px;font-weight:500;white-space:nowrap}
+.vguide td.best{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.vguide td.worst{color:#C0513F}
+.vguide td small{color:var(--muted);font-weight:400}
+.vguide td.best small{color:var(--accent)}
+.imp{display:inline-block;height:8px;border-radius:3px;background:var(--bar2);vertical-align:middle}
 .tag{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
 </style>
 </head>
@@ -161,6 +179,40 @@ select{font:inherit;font-size:14px;padding:4px 8px;border-radius:6px;border:1px 
           <option value="20000" selected>20,000</option>
           <option value="60000">60,000</option>
         </select>
+      </div>
+    </section>
+
+    <section class="panel full" aria-labelledby="vh">
+      <div class="panel-head">
+        <h2 id="vh">Villads's view</h2>
+        <span class="status" id="vStatus">Simulating…</span>
+      </div>
+      <p class="hint">This section shows what Villads needs from the games he doesn't play. It uses the results you set above. The setting below replaces whatever is set for Villads's own games.</p>
+      <div class="settings">
+        <label for="vSel">Villads's own games</label>
+        <select id="vSel">
+          <option value="1,1" selected>He wins both (4/5)</option>
+          <option value="1,0.5">He wins round 4, draws round 5 (3½)</option>
+          <option value="0.5,1">He draws round 4, wins round 5 (3½)</option>
+          <option value="none">Use the results set on the boards</option>
+        </select>
+      </div>
+      <div class="vtiles">
+        <div class="vtile"><span class="vlab">Title chance</span><span class="vnum" id="vWin">–</span></div>
+        <div class="vtile"><span class="vlab">Top-2 chance</span><span class="vnum" id="vTop2">–</span></div>
+        <div class="vtile wide"><span class="vlab">Round 5 opponent</span><span class="vopp" id="vOpp">–</span></div>
+      </div>
+      <h3 class="sub" id="vGuideH">What to hope for in round 4</h3>
+      <p class="hint">Each cell shows Villads's title chance, then his top-2 chance, if that result happens. The best result for him in each game is highlighted, and the worst is marked in red.</p>
+      <div class="scroll">
+        <table class="vguide" id="vGuide">
+          <thead><tr><th class="l">Game</th><th>White wins</th><th>Draw</th><th>Black wins</th><th>Impact</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="notes">
+        <p><b>From the starting position, if Villads wins both his games:</b> he wins the title in about two thirds of cases and finishes top 2 in almost all of them. His main danger is Leia beating Ludvig, which cuts his title chance to about 23%. She would then be on 3½ and can't be his round 5 opponent, because they have already played. Eskil beating Noah is the second danger, because Eskil has the best tiebreak in the group.</p>
+        <p><b>Best case:</b> Ludvig and Leia draw, Noah and Eskil draw, and Johannes and Asmund win. Then nobody can pass 4 points, and Villads wins any tie on tiebreak. <b>Worst case:</b> Leia, Eskil and Buster all win in round 4. Then Villads can't win the title even on 4/5, although he stays in the top 2.</p>
       </div>
     </section>
 
@@ -250,19 +302,27 @@ function pairNext(gs){
   return rec(order);
 }
 
-function r4Games(fixedOnly){
-  const g=[];R4.forEach(([w,b],i)=>{const r=r4res[i];if(r!==null)g.push([w,b,r]);else if(!fixedOnly)g.push([w,b,play(w,b)])});return g;
+function r4Games(fixedOnly,res=r4res){
+  const g=[];R4.forEach(([w,b],i)=>{const r=res[i];if(r!==null)g.push([w,b,r]);else if(!fixedOnly)g.push([w,b,play(w,b)])});return g;
 }
-function allR4Set(){return r4res.every(r=>r!==null)}
+function allR4Set(res=r4res){return res.every(r=>r!==null)}
 const key=(w,b)=>w+"-"+b;
 
-function simulate(n){
+// opts.r4: round 4 results to use; opts.r5: fixed round 5 results by pairing key;
+// opts.vill: [round 4 score, round 5 score] forced for Villads (player 1), or null.
+function simulate(n,opts={}){
+  const V=1, res4=(opts.r4||r4res).slice(), res5=opts.r5||r5res, vill=opts.vill||null;
+  if(vill){const vi=R4.findIndex(g=>g.includes(V));const [w]=R4[vi];res4[vi]=w==V?vill[0]:1-vill[0]}
   const win={},top2={};IDS.forEach(i=>{win[i]=0;top2[i]=0});
-  const fixedPair=allR4Set()?pairNext(PLAYED.concat(r4Games(true))):null;
+  const fixedPair=allR4Set(res4)?pairNext(PLAYED.concat(r4Games(true,res4))):null;
   for(let k=0;k<n;k++){
-    let gs=PLAYED.concat(r4Games(false));
+    let gs=PLAYED.concat(r4Games(false,res4));
     const pr=fixedPair||pairNext(gs);
-    for(const [w,b] of pr){const f=fixedPair?r5res[key(w,b)]:undefined;gs.push([w,b,f==null?play(w,b):f])}
+    for(const [w,b] of pr){
+      let f=fixedPair?res5[key(w,b)]:undefined;
+      if(vill&&(w==V||b==V))f=w==V?vill[1]:1-vill[1];
+      gs.push([w,b,f==null?play(w,b):f]);
+    }
     const o=ranking(gs).order; win[o[0]]++; top2[o[0]]++; top2[o[1]]++;
   }
   IDS.forEach(i=>{win[i]/=n;top2[i]/=n});
@@ -322,6 +382,63 @@ function renderOdds(res){
     <td class="barcell"><div class="bar t2"><i style="width:${res.top2[i]*100}%"></i></div></td>
     <td class="pct">${pc(res.top2[i])} ${dl(res.top2[i],baseline?baseline.top2[i]:0)}</td></tr>`).join("");
 }
+// ---------- Villads's view ----------
+let vMode=[1,1], vToken=0;
+const VPER=2000; // simulations per hypothetical result in the guide
+function villadsR4(){
+  const res=r4res.slice();
+  if(vMode){const vi=R4.findIndex(g=>g.includes(1));const [w]=R4[vi];res[vi]=w==1?vMode[0]:1-vMode[0]}
+  return res;
+}
+function renderVillads(){
+  const tok=++vToken, pc=x=>x<0.0005?"0%":x<0.01?"<1%":x>0.995&&x<1?">99%":Math.round(x*100)+"%";
+  const st=document.getElementById("vStatus"); st.textContent="Simulating…";
+  const res4=villadsR4(), base={r4:res4,vill:vMode};
+  const vi=R4.findIndex(g=>g.includes(1));
+  let open=[], stage=4, fixedPair=null;
+  if(!allR4Set(res4)){
+    open=R4.map((g,i)=>({g,i})).filter(o=>o.i!==vi&&res4[o.i]===null);
+  } else {
+    stage=5; fixedPair=pairNext(PLAYED.concat(r4Games(true,res4)));
+    open=fixedPair.filter(g=>!g.includes(1)&&r5res[key(g[0],g[1])]==null).map(g=>({g}));
+  }
+  const opp=fixedPair?fixedPair.find(g=>g.includes(1)).find(x=>x!==1):null;
+  document.getElementById("vOpp").textContent=opp?`${nm(opp)} (${fixedPair.find(g=>g.includes(1))[0]==1?"Villads has White":"Villads has Black"})`:"Depends on round 4 results; usually Ludvig";
+  document.getElementById("vGuideH").textContent=stage==4?"What to hope for in round 4":"What to hope for in round 5";
+  const tb=document.querySelector("#vGuide tbody");
+  tb.innerHTML=open.length?open.map((o,j)=>`<tr id="vg${j}"><td class="l">${nm(o.g[0])} – ${nm(o.g[1])}</td><td>…</td><td>…</td><td>…</td><td></td></tr>`).join("")
+    :`<tr><td class="l" colspan="5">All other results are set.</td></tr>`;
+  setTimeout(()=>{
+    if(tok!==vToken)return;
+    const r=simulate(RUNS,base);
+    document.getElementById("vWin").textContent=pc(r.win[1]);
+    document.getElementById("vTop2").textContent=pc(r.top2[1]);
+    let j=0;
+    const step=()=>{
+      if(tok!==vToken)return;
+      if(j>=open.length){st.textContent=`${VPER.toLocaleString("en")} simulations per result`;return}
+      const o=open[j], cells=[];
+      for(const v of [1,.5,0]){
+        let s;
+        if(stage==4){const a=res4.slice();a[o.i]=v;s=simulate(VPER,{r4:a,vill:vMode})}
+        else s=simulate(VPER,{r4:res4,r5:{...r5res,[key(o.g[0],o.g[1])]:v},vill:vMode});
+        cells.push([s.win[1],s.top2[1]]);
+      }
+      const score=c=>c[0]*1000+c[1];
+      const hi=Math.max(...cells.map(score)), lo=Math.min(...cells.map(score));
+      const spread=Math.max(...cells.map(c=>c[0]))-Math.min(...cells.map(c=>c[0]));
+      const spread2=Math.max(...cells.map(c=>c[1]))-Math.min(...cells.map(c=>c[1]));
+      const imp=Math.max(spread,spread2);
+      const row=document.getElementById("vg"+j);
+      if(row) row.innerHTML=`<td class="l">${nm(o.g[0])} – ${nm(o.g[1])}</td>`+cells.map(c=>{
+        const cls=imp<0.02?"":score(c)==hi?"best":score(c)==lo?"worst":"";
+        return `<td class="${cls}">${pc(c[0])} <small>· ${pc(c[1])}</small></td>`}).join("")+
+        `<td><span class="imp" style="width:${Math.max(2,Math.round(imp*80))}px" title="Largest swing ${Math.round(imp*100)} points"></span></td>`;
+      j++; setTimeout(step,0);
+    };
+    step();
+  },60);
+}
 let timer=null;
 function update(){
   save(); renderBoards(); renderStandings();
@@ -333,8 +450,10 @@ function update(){
     if(isBase||!baseline){ if(isBase) baseline=res; else { const s=r4res; r4res=Array(8).fill(null); baseline=simulate(RUNS); r4res=s; } }
     renderOdds(res);
     document.getElementById("status").textContent=`${RUNS.toLocaleString("en")} simulations · ${Math.round(performance.now()-t0)} ms`;
+    renderVillads();
   },30);
 }
+document.getElementById("vSel").addEventListener("change",e=>{vMode=e.target.value=="none"?null:e.target.value.split(",").map(Number);renderVillads()});
 document.addEventListener("click",e=>{
   const b=e.target.closest(".seg button");
   if(b){const [r,i]=b.dataset.k.split(":");const v=b.dataset.v==="null"?null:Number(b.dataset.v);
