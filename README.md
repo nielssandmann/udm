@@ -8,6 +8,12 @@ Set results for rounds 4 and 5, and the page simulates the remaining games. It s
 - Round 5 pairings are estimated with a simplified Swiss pairing. The official pairings may differ.
 - Source data: [turnering.skak.dk](https://turnering.skak.dk/TournamentActive/Details?tourId=30508&groupId=15432&curtab=tour-table)
 
-Open `index.html` in a browser, or view it through GitHub Pages.
+## Actual results
+
+Browsers can't read turnering.skak.dk directly, so the **Fetch results** GitHub Action copies the pairings and results into `results.json` about every 10 minutes. You can also start it by hand from the Actions tab. The page's **Fetch actual results** button loads that file. Played games are locked, and official round 5 pairings replace the estimate once they are published.
+
+To refresh the copy yourself, run `python scripts/fetch_results.py results.json`.
+
+View the page through GitHub Pages. If you open `index.html` straight from disk, the fetch button can't load `results.json`.
 
 The page was built with AI assistance (Claude Code).

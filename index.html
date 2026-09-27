@@ -122,6 +122,13 @@ h3.sub{font-family:var(--display);font-weight:600;font-size:16px;margin:4px 0 0}
 .vguide td small{color:var(--muted);font-weight:400}
 .vguide td.best small{color:var(--accent)}
 .imp{display:inline-block;height:8px;border-radius:3px;background:var(--bar2);vertical-align:middle}
+.fetchbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px}
+.fetchbtn{border:1px solid var(--accent);background:var(--accent);color:var(--panel);border-radius:7px;padding:7px 14px;font-weight:600;font-size:14px}
+.fetchbtn:hover{filter:brightness(1.08)}
+.fetchbtn:disabled{opacity:.6;cursor:progress}
+.fetchbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lockres{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:14px;font-weight:600;padding:5px 10px;border-radius:7px;background:var(--accent-soft);color:var(--accent)}
+.lk{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:500}
 .tag{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
 </style>
 </head>
@@ -131,6 +138,10 @@ h3.sub{font-family:var(--display);font-weight:600;font-size:16px;margin:4px 0 0}
   <header>
     <div class="eyebrow">U-DM 2026 · U-16 · Swiss, 5 rounds · after round 3</div>
     <h1>Who reaches <span>first and second</span>?</h1>
+    <div class="fetchbar">
+      <button type="button" class="fetchbtn" id="fetchBtn">Fetch actual results</button>
+      <span class="status" id="fetchStatus">Using results up to round 3.</span>
+    </div>
     <p class="lede">Choose results for rounds 4 and 5, and the odds update. Results you leave on <b>?</b> are simulated from the ratings. Ties are broken by Buchholz Cut-1, then full Buchholz.</p>
   </header>
 
@@ -151,7 +162,7 @@ h3.sub{font-family:var(--display);font-weight:600;font-size:16px;margin:4px 0 0}
 
       <div class="panel-head" style="margin-top:6px">
         <h2 id="r5h">Round 5</h2>
-        <span class="tag">Estimated pairings</span>
+        <span class="tag" id="r5tag">Estimated pairings</span>
       </div>
       <div id="r5"></div>
     </section>
@@ -165,7 +176,7 @@ h3.sub{font-family:var(--display);font-weight:600;font-size:16px;margin:4px 0 0}
         <thead><tr><th>Player</th><th class="barcell">1st place</th><th></th><th class="barcell">Top 2</th><th></th></tr></thead>
         <tbody></tbody>
       </table>
-      <p class="hint" id="deltaNote">The small figures show the change from the starting position, when every result is on <b>?</b>.</p>
+      <p class="hint" id="deltaNote">The small figures show the change from the actual position, with only played games counted.</p>
       <div class="settings">
         <label for="drawSel">Draw rate</label>
         <select id="drawSel">
@@ -221,7 +232,7 @@ h3.sub{font-family:var(--display);font-weight:600;font-size:16px;margin:4px 0 0}
       <div class="notes">
         <p><b>How the odds are calculated.</b> Each game's odds come from the players' DSU ratings, with about 35 rating points added for White. The draw rate is highest between evenly matched players. Kunuk, Elliot, Aksel, Malthe and Jonatan have no FIDE rating, so their odds are less reliable.</p>
         <p><b>Round 5 pairings</b> are estimated with a simplified Swiss pairing: score groups, no rematches, and colour rules. The arbiter's pairing program may produce different pairings, especially in the middle of the table. If two players are equal on points, BH-1 and BH, the page ranks the higher-rated player first. The official placing for such a tie may differ.</p>
-        <p>Source: <a href="https://turnering.skak.dk/TournamentActive/Details?tourId=30508&amp;groupId=15432&amp;curtab=tour-table" style="color:var(--accent)">turnering.skak.dk</a>. Rounds 1–3 are final results.</p>
+        <p>Source: <a href="https://turnering.skak.dk/TournamentActive/Details?tourId=30508&amp;groupId=15432&amp;curtab=tour-table" style="color:var(--accent)">turnering.skak.dk</a>. Rounds 1–3 are final results. <b>Fetch actual results</b> loads a copy of the official results that a GitHub Action refreshes about every 10 minutes. Played games are locked, and official round 5 pairings replace the estimate once they are published.</p>
       </div>
     </section>
   </div>
@@ -293,6 +304,13 @@ function pairNext(gs){
   return rec(order);
 }
 
+// Actual results loaded from results.json lock the matching games.
+let OFF={r4:Array(8).fill(null),r5:{},r5pairs:null,fetchedAt:null};
+function pairFinal(gs){return OFF.r5pairs||pairNext(gs)}
+function applyOfficial(){
+  OFF.r4.forEach((v,i)=>{if(v!==null)r4res[i]=v});
+  for(const k in OFF.r5)r5res[k]=OFF.r5[k];
+}
 function r4Games(fixedOnly,res=r4res){
   const g=[];R4.forEach(([w,b],i)=>{const r=res[i];if(r!==null)g.push([w,b,r]);else if(!fixedOnly)g.push([w,b,play(w,b)])});return g;
 }
@@ -305,10 +323,10 @@ function simulate(n,opts={}){
   const V=1, res4=(opts.r4||r4res).slice(), res5=opts.r5||r5res, vill=opts.vill||null;
   if(vill){const vi=R4.findIndex(g=>g.includes(V));const [w]=R4[vi];res4[vi]=w==V?vill[0]:1-vill[0]}
   const win={},top2={};IDS.forEach(i=>{win[i]=0;top2[i]=0});
-  const fixedPair=allR4Set(res4)?pairNext(PLAYED.concat(r4Games(true,res4))):null;
+  const fixedPair=allR4Set(res4)?pairFinal(PLAYED.concat(r4Games(true,res4))):null;
   for(let k=0;k<n;k++){
     let gs=PLAYED.concat(r4Games(false,res4));
-    const pr=fixedPair||pairNext(gs);
+    const pr=fixedPair||pairFinal(gs);
     for(const [w,b] of pr){
       let f=fixedPair?res5[key(w,b)]:undefined;
       if(vill&&(w==V||b==V))f=w==V?vill[1]:1-vill[1];
@@ -321,33 +339,35 @@ function simulate(n,opts={}){
 }
 
 // ---------- UI ----------
-function segHTML(id,val){
+function segHTML(id,val,locked){
+  if(locked)return `<div class="lockres" title="Actual result from turnering.skak.dk"><span class="lk">Played</span>${val==1?"1–0":val==0?"0–1":"½–½"}</div>`;
   const opts=[[1,"1–0"],[.5,"½"],[0,"0–1"],[null,"?"]];
   return `<div class="seg" role="group" aria-label="Result">${opts.map(([v,l])=>`<button type="button" data-k="${id}" data-v="${v}" class="${v===null?"q":""}" aria-pressed="${val===v}">${l}</button>`).join("")}</div>`;
 }
-function boardHTML(no,w,b,val,id){
+function boardHTML(no,w,b,val,id,locked=false){
   const {pts}=tables(PLAYED.concat(r4Games(true)));
   const [pw,pd,pl]=probs(w,b);
   return `<div class="board"><div class="bno">${no}</div><div class="players">
    <div class="pl"><span class="dot w" title="White"></span><span class="nm">${nm(w)}</span><span class="meta">${rt(w)} · ${fmt(pts[w])}</span></div>
    <div class="pl"><span class="dot b" title="Black"></span><span class="nm">${nm(b)}</span><span class="meta">${rt(b)} · ${fmt(pts[b])}</span></div>
    <div class="odds">Rating odds: White ${Math.round(pw*100)} · draw ${Math.round(pd*100)} · Black ${Math.round(pl*100)}</div>
-  </div>${segHTML(id,val)}</div>`;
+  </div>${segHTML(id,val,locked)}</div>`;
 }
 const fmt=x=>{const w=Math.floor(x),h=x-w>0;return (w||!h?w:"")+(h?"½":"")};
 
 function renderBoards(){
-  document.getElementById("r4").innerHTML=R4.map(([w,b],i)=>boardHTML(i+1,w,b,r4res[i],"r4:"+i)).join("");
+  document.getElementById("r4").innerHTML=R4.map(([w,b],i)=>boardHTML(i+1,w,b,r4res[i],"r4:"+i,OFF.r4[i]!==null)).join("");
   const r5=document.getElementById("r5");
-  if(!allR4Set()){r5.innerHTML=`<p class="locked">Set all eight round 4 results to see the estimated round 5 pairings. Until then, round 5 is simulated with pairings worked out for each run.</p>`;return}
-  const pr=pairNext(PLAYED.concat(r4Games(true)));
+  if(!allR4Set()){document.getElementById("r5tag").textContent=OFF.r5pairs?"Official pairings":"Estimated pairings";r5.innerHTML=`<p class="locked">Set all eight round 4 results to see the estimated round 5 pairings. Until then, round 5 is simulated with pairings worked out for each run.</p>`;return}
+  const pr=pairFinal(PLAYED.concat(r4Games(true)));
   const valid=new Set(pr.map(([w,b])=>key(w,b)));
   for(const k in r5res)if(!valid.has(k))delete r5res[k];
-  r5.innerHTML=`<div class="boards">${pr.map(([w,b],i)=>boardHTML(i+1,w,b,r5res[key(w,b)]??null,"r5:"+key(w,b))).join("")}</div>`;
+  document.getElementById("r5tag").textContent=OFF.r5pairs?"Official pairings":"Estimated pairings";
+  r5.innerHTML=`<div class="boards">${pr.map(([w,b],i)=>boardHTML(i+1,w,b,r5res[key(w,b)]??null,"r5:"+key(w,b),OFF.r5[key(w,b)]!=null)).join("")}</div>`;
 }
 function renderStandings(){
   const gs=PLAYED.concat(r4Games(true));
-  if(allR4Set()){const pr=pairNext(gs);for(const [w,b] of pr){const f=r5res[key(w,b)];if(f!=null)gs.push([w,b,f])}}
+  if(allR4Set()){const pr=pairFinal(gs);for(const [w,b] of pr){const f=r5res[key(w,b)];if(f!=null)gs.push([w,b,f])}}
   const {order,t}=ranking(gs);
   const rounds={};IDS.forEach(i=>rounds[i]=[]);
   gs.forEach(([w,b,s])=>{rounds[w].push({o:b,c:"w",s});rounds[b].push({o:w,c:"bk",s:1-s})});
@@ -390,7 +410,7 @@ function renderVillads(){
   if(!allR4Set(res4)){
     open=R4.map((g,i)=>({g,i})).filter(o=>o.i!==vi&&res4[o.i]===null);
   } else {
-    stage=5; fixedPair=pairNext(PLAYED.concat(r4Games(true,res4)));
+    stage=5; fixedPair=pairFinal(PLAYED.concat(r4Games(true,res4)));
     open=fixedPair.filter(g=>!g.includes(1)&&r5res[key(g[0],g[1])]==null).map(g=>({g}));
   }
   const opp=fixedPair?fixedPair.find(g=>g.includes(1)).find(x=>x!==1):null;
@@ -432,13 +452,12 @@ function renderVillads(){
 }
 let timer=null;
 function update(){
-  save(); renderBoards(); renderStandings();
+  applyOfficial(); save(); renderBoards(); renderStandings();
   document.getElementById("status").textContent="Simulating…";
   clearTimeout(timer);
   timer=setTimeout(()=>{
     const t0=performance.now(), res=simulate(RUNS);
-    const isBase=r4res.every(r=>r===null);
-    if(isBase||!baseline){ if(isBase) baseline=res; else { const s=r4res; r4res=Array(8).fill(null); baseline=simulate(RUNS); r4res=s; } }
+    if(!baseline) baseline=simulate(RUNS,{r4:OFF.r4,r5:{...OFF.r5}});
     renderOdds(res);
     document.getElementById("status").textContent=`${RUNS.toLocaleString("en")} simulations · ${Math.round(performance.now()-t0)} ms`;
     renderVillads();
@@ -457,7 +476,34 @@ function update(){
 });
 document.getElementById("drawSel").addEventListener("change",e=>{drawMul=Number(e.target.value);baseline=null;update()});
 document.getElementById("runsSel").addEventListener("change",e=>{RUNS=Number(e.target.value);baseline=null;update()});
+async function fetchResults(manual){
+  const btn=document.getElementById("fetchBtn"), st=document.getElementById("fetchStatus");
+  btn.disabled=true; st.textContent="Fetching…";
+  try{
+    const r=await fetch("results.json?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const d=await r.json(), off={r4:Array(8).fill(null),r5:{},r5pairs:null,fetchedAt:d.fetchedAt};
+    for(const g of (d.rounds["4"]||[])){
+      const i=R4.findIndex(([w,b])=>w==g.white&&b==g.black);
+      if(i>=0&&g.score!=null)off.r4[i]=g.score;
+    }
+    const r5=d.rounds["5"]||[];
+    if(r5.length==8){
+      off.r5pairs=r5.map(g=>[g.white,g.black]);
+      for(const g of r5)if(g.score!=null)off.r5[key(g.white,g.black)]=g.score;
+    }
+    OFF=off; baseline=null;
+    const n4=off.r4.filter(v=>v!==null).length, n5=Object.keys(off.r5).length;
+    const when=d.fetchedAt?new Date(d.fetchedAt).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"}):"unknown time";
+    st.textContent=`Copied from turnering.skak.dk ${when}: round 4 ${n4}/8 played`+(off.r5pairs?`, round 5 paired, ${n5}/8 played`:", round 5 not paired yet")+".";
+    update();
+  }catch(e){
+    st.textContent=manual?"Couldn't load the results. Check that GitHub Pages is on and the Fetch results action has run.":"Using results up to round 3.";
+  }finally{btn.disabled=false}
+}
+document.getElementById("fetchBtn").addEventListener("click",()=>fetchResults(true));
 update();
+fetchResults(false);
 </script>
 
 </body>
