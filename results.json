@@ -1,6 +1,6 @@
 {
  "source": "https://turnering.skak.dk/Round/ShowRoundResults/15432?selectedRound=1&tournamentId=30508",
- "fetchedAt": "2026-09-27T15:19:53+00:00",
+ "fetchedAt": "2026-09-27T19:02:09+00:00",
  "rounds": {
   "1": [
    {
@@ -206,8 +206,8 @@
    {
     "white": 2,
     "black": 4,
-    "score": null,
-    "text": ""
+    "score": 0.5,
+    "text": "½ - ½"
    },
    {
     "white": 1,
